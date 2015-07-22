@@ -1,6 +1,6 @@
 
 function Intellisense (ast) {
-  // TODO
+  return Object.keys(ast.classes);
 }
 
 module.exports = Intellisense;
