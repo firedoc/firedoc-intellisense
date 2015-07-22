@@ -2,7 +2,7 @@
   "name": "firedoc-intellisense",
   "version": "1.0.0",
   "description": "Build an intellisense from FireDoc AST",
-  "main": "lib/index.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
