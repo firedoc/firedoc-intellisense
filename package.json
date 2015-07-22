@@ -1,0 +1,23 @@
+{
+  "name": "firedoc-intellisense",
+  "version": "1.0.0",
+  "description": "Build an intellisense from FireDoc AST",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:firedoc/firedoc-intellisense.git"
+  },
+  "keywords": [
+    "firedoc",
+    "intellisense"
+  ],
+  "author": "Yorkie Liu <yorkiefixer@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/firedoc/firedoc-intellisense/issues"
+  },
+  "homepage": "https://github.com/firedoc/firedoc-intellisense"
+}
