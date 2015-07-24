@@ -1,6 +1,7 @@
 
 var Intellisense = function (ast) {
   var namespaces = {};
+  var submodules = {};
   var classesKeys = Object.keys(ast.classes);
   var modulesKeys = Object.keys(ast.modules);
   var ret = classesKeys.concat(modulesKeys);
@@ -10,17 +11,28 @@ var Intellisense = function (ast) {
     if (mod && mod.type === 'modules') {
       mod.classes = mod.classes || {};
       mod.members = mod.members || [];
+      mod.submodules = mod.submodules || {};
       namespaces[mod.namespace] = mod;
+      if (mod.name.indexOf('.') !== -1) {
+        submodules[mod.name] = mod;
+      }
+    }
+  }
+  for (var src in submodules) {
+    var sp = src.lastIndexOf('.');
+    var ns = src.slice(0, sp);
+    var name = src.slice(sp + 1);
+    var parent = namespaces[ns];
+    if (parent) {
+      parent.submodules[name] = submodules[src];
     }
   }
   for (var name in ast.classes) {
     var clazz = ast.classes[name];
     if (clazz) {
       clazz.members = clazz.members || [];
-      try {
-        namespaces[clazz.namespace] = clazz;
-        namespaces[clazz.module].classes[clazz.name] = clazz;
-      } catch (e) {};
+      namespaces[clazz.namespace] = clazz;
+      namespaces[clazz.module].classes[clazz.name] = clazz;
     }
   }
   for (var idx in ast.members) {
@@ -31,13 +43,12 @@ var Intellisense = function (ast) {
         function (item) { return item; }
       ).join('.');
       var parent = namespaces[parentNS];
-      if (parent) {
-        console.log(parentNS, parent);
+      if (parent && parent.members) {
         parent.members.push(member);
       }
       if (member.itemtype === 'method') {
         if (member.module === ns) {
-          ns = ns + '.' + member.module;
+          ns = ns + '.__constructor__';
         }
         namespaces[ns] = member;
       } else {
@@ -59,9 +70,13 @@ var Intellisense = function (ast) {
   };
   function getNext (root) {
     var next = root.classes || {};
-    (root.members || []).forEach(function (member) {
+    for (var name in root.submodules || {}) {
+      next[name] = root.submodules[name];
+    }
+    for (var idx in root.members || []) {
+      var member = root.members[idx];
       next[member.name] = member;
-    });
+    }
     return next;
   }
   console.log(namespaces);
