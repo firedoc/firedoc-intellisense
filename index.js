@@ -64,7 +64,7 @@ var Intellisense = function (ast) {
     if (/\[\]$/.test(name)) {
       return { 'next': [] };
     }
-    var ret = namespaces[name];
+    var ret = namespaces[name] || ast.classes[name];
     if (ret) {
       var type = ast.classes[ret.type];
       if (type) {
