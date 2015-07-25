@@ -61,6 +61,9 @@ var Intellisense = function (ast) {
     }
   }
   ret.get = function (name) {
+    if (/\[\]$/.test(name)) {
+      return { 'next': [] };
+    }
     var ret = namespaces[name];
     if (ret) {
       var type = ast.classes[ret.type];
