@@ -16,6 +16,10 @@ var Intellisense = function (ast) {
       if (mod.name.indexOf('.') !== -1) {
         submodules[mod.name] = mod;
       }
+      for (var name in mod.classes) {
+        if (ast.classes[name] === null) 
+          ast.classes[name] = mod.classes[name];
+      }
     }
   }
   for (var src in submodules) {
