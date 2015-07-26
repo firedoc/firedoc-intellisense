@@ -21,7 +21,11 @@ function appendModules (list) {
       if (this.ast.classes[subClassName] === null)
         this.ast.classes[subClassName] = mod.classes[subClassName];
     }
-    list.push(name);
+    list.push({
+      'text': name,
+      'type': 'module',
+      'description': mod.description
+    });
   }
   return list;
 }
@@ -53,7 +57,11 @@ function appendClasses (list) {
       this.namespaces[clazz.namespace] = clazz;
       this.namespaces[clazz.module].classes[clazz.name] = clazz;
     }
-    list.push(name);
+    list.push({
+      'text': name,
+      'type': 'class',
+      'description': clazz.description
+    });
   }
   return list;
 }
@@ -90,13 +98,31 @@ function appendMembers (list) {
  * @method getNext
  */
 function getNext (root) {
-  var next = root.classes || {};
-  for (var name in root.submodules || {}) {
-    next[name] = root.submodules[name];
+  var next = {};
+  var name;
+  for (name in root.classes || {}) {
+    var clazz = root.classes[name];
+    next[name] = {
+      'text': name,
+      'type': 'class',
+      'description': clazz.description
+    };
+  }
+  for (name in root.submodules || {}) {
+    var mod = root.submodules[name];
+    next[name] = {
+      'text': name,
+      'type': 'module',
+      'description': mod.description
+    };
   }
   for (var idx in root.members || []) {
     var member = root.members[idx];
-    next[member.name] = member;
+    next[member.name] = {
+      'text': member.name,
+      'type': member.itemtype || 'member',
+      'description': member.description
+    };
   }
   return next;
 }
@@ -104,11 +130,12 @@ function getNext (root) {
 /**
  * @method ListPrototypeGet
  */
-function ListPrototypeGet () {
+function ListPrototypeGet (name) {
   if (/\[\]$/.test(name)) {
     return { 'next': [] };
   }
-  var ret = this.namespaces[name] || this.ast.classes[name];
+  var ret = this.namespaces[name] || 
+    this.ast.classes[name];
   if (ret) {
     var type = this.ast.classes[ret.type];
     if (type) {
