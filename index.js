@@ -1,52 +1,75 @@
 
-var Intellisense = function (ast) {
-  var namespaces = {};
-  var submodules = {};
-  var classesKeys = Object.keys(ast.classes);
-  var modulesKeys = Object.keys(ast.modules);
-  var ret = classesKeys.concat(modulesKeys);
-
-  for (var name in ast.modules) {
-    var mod = ast.modules[name];
-    if (mod && mod.type === 'modules') {
-      mod.classes = mod.classes || {};
-      mod.members = mod.members || [];
-      mod.submodules = mod.submodules || {};
-      namespaces[mod.namespace] = mod;
-      if (mod.name.indexOf('.') !== -1) {
-        submodules[mod.name] = mod;
-      }
-      for (var name in mod.classes) {
-        if (ast.classes[name] === null) 
-          ast.classes[name] = mod.classes[name];
-      }
+/**
+ * @method appendModules
+ */
+function appendModules (list) {
+  for (var name in this.ast.modules) {
+    var mod = this.ast.modules[name];
+    if (!mod || mod.type !== 'modules') { 
+      break;
     }
+    mod.members = mod.members || [];
+    mod.classes = mod.classes || {};
+    mod.submodules = mod.submodules || {};
+    if (mod.namespace) {
+      this.namespaces[mod.namespace] = mod;
+    }
+    if (mod.name.indexOf('.') !== -1) {
+      this.submodules[mod.name] = mod;
+    }
+    for (var subClassName in mod.classes) {
+      if (this.ast.classes[subClassName] === null)
+        this.ast.classes[subClassName] = mod.classes[subClassName];
+    }
+    list.push(name);
   }
-  for (var src in submodules) {
+  return list;
+}
+
+/**
+ * @method appendSubmodules
+ */
+function appendSubmodules (list) {
+  for (var src in this.submodules) {
     var sp = src.lastIndexOf('.');
     var ns = src.slice(0, sp);
     var name = src.slice(sp + 1);
-    var parent = namespaces[ns];
+    var parent = this.namespaces[ns];
     if (parent) {
-      parent.submodules[name] = submodules[src];
+      parent.submodules[name] = this.submodules[src];
     }
   }
-  for (var name in ast.classes) {
-    var clazz = ast.classes[name];
+  return list;
+}
+
+/**
+ * @method appendClasses
+ */
+function appendClasses (list) {
+  for (var name in this.ast.classes) {
+    var clazz = this.ast.classes[name];
     if (clazz) {
       clazz.members = clazz.members || [];
-      namespaces[clazz.namespace] = clazz;
-      namespaces[clazz.module].classes[clazz.name] = clazz;
+      this.namespaces[clazz.namespace] = clazz;
+      this.namespaces[clazz.module].classes[clazz.name] = clazz;
     }
+    list.push(name);
   }
-  for (var idx in ast.members) {
-    var member = ast.members[idx];
+  return list;
+}
+
+/**
+ * @method appendMembers
+ */
+function appendMembers (list) {
+  for (var idx in this.ast.members) {
+    var member = this.ast.members[idx];
     if (member) {
       var ns = member.namespace;
       var parentNS = [member.module, member.clazz].filter(
         function (item) { return item; }
       ).join('.');
-      var parent = namespaces[parentNS];
+      var parent = this.namespaces[parentNS];
       if (parent && parent.members) {
         parent.members.push(member);
       }
@@ -54,40 +77,67 @@ var Intellisense = function (ast) {
         if (member.module === ns) {
           ns = ns + '.__constructor__';
         }
-        namespaces[ns] = member;
+        this.namespaces[ns] = member;
       } else {
-        namespaces[ns] = member;
+        this.namespaces[ns] = member;
       }
     }
   }
-  ret.get = function (name) {
-    if (/\[\]$/.test(name)) {
-      return { 'next': [] };
-    }
-    var ret = namespaces[name] || ast.classes[name];
-    if (ret) {
-      var type = ast.classes[ret.type];
-      if (type) {
-        ret.next = getNext(type);
-      } else {
-        ret.next = getNext(ret);
-      }
-    }
-    return ret;
-  };
-  function getNext (root) {
-    var next = root.classes || {};
-    for (var name in root.submodules || {}) {
-      next[name] = root.submodules[name];
-    }
-    for (var idx in root.members || []) {
-      var member = root.members[idx];
-      next[member.name] = member;
-    }
-    return next;
+  return list;
+}
+
+/**
+ * @method getNext
+ */
+function getNext (root) {
+  var next = root.classes || {};
+  for (var name in root.submodules || {}) {
+    next[name] = root.submodules[name];
   }
-  console.log(namespaces);
+  for (var idx in root.members || []) {
+    var member = root.members[idx];
+    next[member.name] = member;
+  }
+  return next;
+}
+
+/**
+ * @method ListPrototypeGet
+ */
+function ListPrototypeGet () {
+  if (/\[\]$/.test(name)) {
+    return { 'next': [] };
+  }
+  var ret = this.namespaces[name] || this.ast.classes[name];
+  if (ret) {
+    var type = this.ast.classes[ret.type];
+    if (type) {
+      ret.next = getNext(type);
+    } else {
+      ret.next = getNext(ret);
+    }
+  }
   return ret;
 };
+
+/**
+ * @method Intellisense
+ * @export
+ */
+function Intellisense (ast) {
+  var list = [];
+  var ctx = {
+    ast: ast,
+    namespaces: {},
+    submodules: {}
+  };
+  list = appendModules.call(ctx, list);
+  list = appendSubmodules.call(ctx, list);
+  list = appendClasses.call(ctx, list);
+  list = appendMembers.call(ctx, list);
+  list.get = ListPrototypeGet.bind(ctx);
+  // console.log(ctx.namespaces);
+  return list;
+}
 
 module.exports = Intellisense;
