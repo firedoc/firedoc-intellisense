@@ -118,9 +118,21 @@ function getNext (root) {
   }
   for (var idx in root.members || []) {
     var member = root.members[idx];
+    var typeDisplay = member.itemtype || 'member';
+    if (typeDisplay === 'method') {
+      var args = (member.params || []).map(function (arg) {
+        return arg.name + ': ' + arg.type;
+      });
+      typeDisplay = '(' + args.join(', ') + ')';
+      if (member.return && member.return.type) {
+        typeDisplay += ' => ' + member.return.type + '';
+      }
+    } else if (typeDisplay === 'property') {
+      typeDisplay += (': ' + (member.type || 'any'));
+    }
     next[member.name] = {
       'text': member.name,
-      'type': member.itemtype || 'member',
+      'type': typeDisplay,
       'description': member.description
     };
   }
