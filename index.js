@@ -6,7 +6,7 @@ function appendModules (list) {
   for (var name in this.ast.modules) {
     var mod = this.ast.modules[name];
     if (!mod || mod.type !== 'modules') { 
-      break;
+      continue;
     }
     mod.members = mod.members || [];
     mod.classes = mod.classes || {};
@@ -20,6 +20,13 @@ function appendModules (list) {
     for (var subClassName in mod.classes) {
       if (this.ast.classes[subClassName] === null)
         this.ast.classes[subClassName] = mod.classes[subClassName];
+    }
+    for (var submoduleName in mod.submodules) {
+      var submod = this.ast.modules[submoduleName];
+      if (!submod) {
+        submod = this.ast.modules[submoduleName] = mod.submodules[submoduleName];
+        this.namespaces[submoduleName] = submod;
+      }
     }
     list.push({
       'text': name,
@@ -55,13 +62,16 @@ function appendClasses (list) {
     if (clazz) {
       clazz.members = clazz.members || [];
       this.namespaces[clazz.namespace] = clazz;
-      this.namespaces[clazz.module].classes[clazz.name] = clazz;
+      var mod = this.namespaces[clazz.module];
+      if (mod && mod.classes) {
+        mod.classes[clazz.name] = clazz;
+      }
+      list.push({
+        'text': name,
+        'type': 'class',
+        'description': clazz.description
+      });
     }
-    list.push({
-      'text': name,
-      'type': 'class',
-      'description': clazz.description
-    });
   }
   return list;
 }
@@ -175,7 +185,7 @@ function Intellisense (ast) {
   list = appendClasses.call(ctx, list);
   list = appendMembers.call(ctx, list);
   list.get = ListPrototypeGet.bind(ctx);
-  // console.log(ctx.namespaces);
+  console.log(ctx.namespaces);
   return list;
 }
 
