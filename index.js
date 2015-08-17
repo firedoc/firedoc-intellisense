@@ -125,11 +125,11 @@ function getNext (root) {
   var name;
   for (name in root.classes || {}) {
     var clazz = root.classes[name];
-    next[name] = buildNextForClass(clazz);
+    next[name] = buildNextForClass(clazz, name);
   }
   for (name in root.submodules || {}) {
     var mod = root.submodules[name];
-    next[mod.name] = buildNextForModule(mod);
+    next[name] = buildNextForModule(mod, name);
   }
   for (var idx in root.members || []) {
     var member = root.members[idx];
@@ -138,18 +138,18 @@ function getNext (root) {
   return next;
 }
 
-function buildNextForClass (clazz) {
+function buildNextForClass (clazz, name) {
   return {
     'type': 'class',
-    'text': clazz.name,
+    'text': name || clazz.name,
     'description': clazz.description
   };
 }
 
-function buildNextForModule (module) {
+function buildNextForModule (module, name) {
   return {
     'type': 'module',
-    'text': module.name,
+    'text': name || module.name,
     'description': module.description
   };
 }
