@@ -82,6 +82,10 @@ function appendClasses (list) {
 function appendMembers (list) {
   for (var idx in this.ast.members) {
     var member = this.ast.members[idx];
+    // break the private member
+    if (member && member.access === 'private') {
+      continue;
+    }
     if (member) {
       var ns = member.namespace;
       var parentNS = [member.module, member.clazz].filter(
